@@ -1,0 +1,170 @@
+<Window x:Class="PdfBoxPOC.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:PdfBoxPOC"
+        Title="PDF Template Designer" Width="1450" Height="880"
+        Background="#111">
+
+    <DockPanel>
+
+        <!-- Top command bar -->
+        <Grid DockPanel.Dock="Top" Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Button Width="110" Margin="0,0,8,0" Click="OpenPdf_Click">Open PDF</Button>
+                <Button Width="110" Margin="0,0,8,0" Click="ClearBox_Click">Clear Box</Button>
+                <Button Width="120" Margin="0,0,16,0" Click="ClearForm_Click">Clear Form</Button>
+
+                <Button Width="90" Margin="0,0,8,0" Click="Undo_Click">Undo</Button>
+                <Button Width="90" Margin="0,0,16,0" Click="Redo_Click">Redo</Button>
+
+                <Button Width="140" Margin="0,0,8,0" Click="AddFieldFromSelection_Click">Add Field</Button>
+                <Button Width="120" Margin="0,0,8,0" Click="AddTable_Click">Add Table</Button>
+                <Button Width="150" Margin="0,0,8,0" Click="SetTableRegionFromSelection_Click">Set Table Region</Button>
+                <Button Width="120" Margin="0,0,8,0" Click="AddColumnFromSelection_Click">Add Column</Button>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
+                <Button Width="120" Margin="0,0,8,0" Click="EditSelected_Click">Edit Selected</Button>
+                <Button Width="120" Margin="0,0,16,0" Click="DeleteSelected_Click">Delete Selected</Button>
+
+                <Button Width="140" Margin="0,0,8,0" Click="PreviewExport_Click">Preview Export</Button>
+                <Button Width="140" Margin="0,0,8,0" Click="SaveTemplate_Click">Save Template</Button>
+                <Button Width="140" Margin="0,0,8,0" Click="LoadTemplate_Click">Load Template</Button>
+                <Button Width="170" Margin="0,0,16,0" Click="BatchProcess_Click">Batch → output.csv</Button>
+
+                <TextBlock VerticalAlignment="Center" FontFamily="Consolas" Foreground="#ddd" Text="{Binding RectStatus}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Main layout -->
+        <Grid Background="#111">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360"/>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="6"/>
+                <RowDefinition Height="240"/>
+            </Grid.RowDefinitions>
+
+            <!-- LEFT: Designer panel -->
+            <Border Grid.Column="0" Grid.Row="0" Margin="8" Background="#1b1b1b" CornerRadius="6" Padding="10" MinWidth="260">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock FontSize="14" Foreground="White" Text="Select Item" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding AllItems}"
+                                  SelectedItem="{Binding SelectedItem}"
+                                  DisplayMemberPath="DisplayName"
+                                  Background="#222" Foreground="#eee" BorderBrush="#333"/>
+                        <TextBlock FontFamily="Consolas" Foreground="#bbb" Margin="0,8,0,0" TextWrapping="Wrap"
+                                   Text="{Binding SelectedItemSummary}"/>
+                    </StackPanel>
+
+                    <TabControl Background="#1b1b1b" BorderThickness="0">
+                        <TabItem Header="Fields">
+                            <ListBox ItemsSource="{Binding Fields}" SelectedItem="{Binding SelectedField}"
+                                     Background="#222" Foreground="#eee" BorderBrush="#333" BorderThickness="1">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="6">
+                                            <TextBlock FontWeight="Bold" Text="{Binding Name}" />
+                                            <TextBlock FontFamily="Consolas" FontSize="12" Foreground="#bbb" Text="{Binding Summary}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </TabItem>
+
+                        <TabItem Header="Tables">
+                            <Grid Margin="0,8,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Foreground="#ddd" Text="Skip header rows:" VerticalAlignment="Center"/>
+                                    <TextBox Width="50" Margin="8,0,0,0" Text="{Binding SelectedTable.SkipHeaderRows}" />
+                                    <TextBlock Foreground="#ddd" Text="Y tolerance:" Margin="16,0,0,0" VerticalAlignment="Center"/>
+                                    <TextBox Width="70" Margin="8,0,0,0" Text="{Binding SelectedTable.YTolerance}" />
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="1" FontFamily="Consolas" Foreground="#bbb" TextWrapping="Wrap"
+                                           Text="{Binding SelectedTableSummary}" Margin="0,0,0,8"/>
+
+                                <TreeView Grid.Row="2" ItemsSource="{Binding Tables}"
+                                          Background="#222" Foreground="#eee" BorderBrush="#333" BorderThickness="1">
+                                    <TreeView.Resources>
+                                        <HierarchicalDataTemplate DataType="{x:Type local:MainWindow+TableDef}" ItemsSource="{Binding Columns}">
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </HierarchicalDataTemplate>
+                                        <DataTemplate DataType="{x:Type local:MainWindow+ColumnDef}">
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </TreeView.Resources>
+                                </TreeView>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </DockPanel>
+            </Border>
+
+            <!-- Splitter between left and PDF view -->
+            <GridSplitter Grid.Column="1" Grid.Row="0" Width="6"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="#333"
+                          ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
+
+            <!-- CENTER: PDF viewport -->
+            <Border Grid.Column="2" Grid.Row="0" Margin="8" Background="#222" CornerRadius="6" Padding="8" MinWidth="400">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Image x:Name="PdfImage" Stretch="None" SnapsToDevicePixels="True" />
+                        <Canvas x:Name="PersistedLayer" Background="Transparent"/>
+                        <Canvas x:Name="SelectionLayer"
+                                Background="Transparent"
+                                MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+                                MouseMove="Overlay_MouseMove"
+                                MouseLeftButtonUp="Overlay_MouseLeftButtonUp" />
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Splitter between top and bottom output -->
+            <GridSplitter Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Height="6"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="#333"
+                          ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" />
+
+            <!-- Bottom output (scrollable) -->
+            <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2" Margin="8" Background="#1b1b1b" CornerRadius="6" Padding="10" MinHeight="140">
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock FontSize="16" Foreground="White" Text="Selection / Preview Output" Margin="0,0,0,8"/>
+                        <TextBlock FontFamily="Consolas" Foreground="#ddd" Text="{Binding ScreenRectText}" Margin="0,0,0,4"/>
+                        <TextBlock FontFamily="Consolas" Foreground="#ddd" Text="{Binding PdfRectText}" Margin="0,0,0,8"/>
+                    </StackPanel>
+
+                    <TextBox FontFamily="Consolas"
+                             Foreground="#ddd"
+                             Background="#121212"
+                             BorderBrush="#333"
+                             Text="{Binding NotesText}"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
